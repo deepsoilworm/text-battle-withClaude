@@ -4,8 +4,8 @@
   "description": "텍스트 배틀 게임 - MCP 서버",
   "type": "module",
   "bin": {
-    "text-battle": "./src/mcp-server.js",
-    "text-battle-setup": "./src/setup.js"
+    "text-battle": "src/mcp-server.js",
+    "text-battle-setup": "src/setup.js"
   },
   "scripts": {
     "start": "node src/mcp-server.js",
