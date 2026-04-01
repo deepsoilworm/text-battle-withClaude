@@ -1,0 +1,8 @@
+.claude/
+.env
+.git/
+node_modules/
+battles/
+characters/
+data/
+npcs/
