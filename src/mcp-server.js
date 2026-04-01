@@ -3,21 +3,56 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "crypto";
 import { z } from "zod";
 
-// Supabase 설정
-const supabaseUrl = process.env.TEXT_BATTLE_SUPABASE_URL;
-const supabaseKey = process.env.TEXT_BATTLE_SUPABASE_KEY;
+// Supabase 설정 (공용 서버 — RLS로 보호됨)
+const supabaseUrl = process.env.TEXT_BATTLE_SUPABASE_URL || "https://rdgkcwvcqweoflgiqoun.supabase.co";
+const supabaseKey = process.env.TEXT_BATTLE_SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkZ2tjd3ZjcXdlb2ZsZ2lxb3VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDcxOTEsImV4cCI6MjA5MDYyMzE5MX0.qX6Osx758YmcRlHy54iHSd6aFCg8E7r4NL88XueaJmg";
 const OWNER_ID = process.env.TEXT_BATTLE_OWNER || "anonymous";
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error(
-    "환경변수 TEXT_BATTLE_SUPABASE_URL, TEXT_BATTLE_SUPABASE_KEY를 설정해주세요."
-  );
-  process.exit(1);
-}
+const OWNER_SECRET = process.env.TEXT_BATTLE_SECRET || "";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// 비밀번호 해시 함수
+function hashSecret(owner, secret) {
+  return createHash("sha256").update(`${owner}:${secret}`).digest("hex");
+}
+
+// 플레이어 인증 (최초 등록 또는 검증)
+// 비밀번호를 잊으면 새 비밀번호로 재등록 가능하지만, 기존 캐릭터는 관리 불가
+async function verifyOwner() {
+  if (!OWNER_SECRET) {
+    return { ok: false, msg: "TEXT_BATTLE_SECRET 환경변수를 설정해주세요." };
+  }
+
+  const hash = hashSecret(OWNER_ID, OWNER_SECRET);
+  const { data: player } = await supabase
+    .from("players")
+    .select("*")
+    .eq("owner", OWNER_ID)
+    .single();
+
+  if (!player) {
+    // 최초 등록
+    const { error } = await supabase
+      .from("players")
+      .insert({ owner: OWNER_ID, owner_hash: hash });
+    if (error) return { ok: false, msg: `등록 실패: ${error.message}` };
+    return { ok: true, msg: "신규 등록 완료", hash };
+  }
+
+  // 기존 유저 — 비밀번호가 다르면 새 해시로 업데이트 (비밀번호 변경)
+  // 단, 기존 캐릭터의 owner_hash는 그대로라 이전 캐릭터는 삭제 불가
+  if (player.owner_hash !== hash) {
+    await supabase
+      .from("players")
+      .update({ owner_hash: hash })
+      .eq("owner", OWNER_ID);
+    return { ok: true, msg: "비밀번호 변경됨. 이전 비밀번호로 만든 캐릭터는 삭제할 수 없습니다.", hash };
+  }
+  return { ok: true, msg: "인증 완료", hash };
+}
 
 // Elo 계산
 function calculateElo(winnerElo, loserElo, k = 32) {
@@ -48,6 +83,12 @@ server.tool(
       .describe("캐릭터 설명 (300자 이내)"),
   },
   async ({ name, description }) => {
+    // 인증
+    const auth = await verifyOwner();
+    if (!auth.ok) {
+      return { content: [{ type: "text", text: `🔒 ${auth.msg}` }] };
+    }
+
     // 이름 중복 체크
     const { data: existing } = await supabase
       .from("characters")
@@ -68,7 +109,7 @@ server.tool(
 
     const { data, error } = await supabase
       .from("characters")
-      .insert({ name, description, owner: OWNER_ID, is_npc: false })
+      .insert({ name, description, owner: OWNER_ID, owner_hash: auth.hash, is_npc: false })
       .select()
       .single();
 
@@ -464,6 +505,12 @@ server.tool(
     name: z.string().describe("삭제할 캐릭터 이름"),
   },
   async ({ name }) => {
+    // 인증
+    const auth = await verifyOwner();
+    if (!auth.ok) {
+      return { content: [{ type: "text", text: `🔒 ${auth.msg}` }] };
+    }
+
     const { data: char } = await supabase
       .from("characters")
       .select("*")
@@ -484,12 +531,12 @@ server.tool(
       };
     }
 
-    if (char.owner !== OWNER_ID) {
+    if (char.owner_hash !== auth.hash) {
       return {
         content: [
           {
             type: "text",
-            text: `본인 캐릭터만 삭제할 수 있습니다. (소유자: ${char.owner})`,
+            text: `🔒 본인 캐릭터만 삭제할 수 있습니다.`,
           },
         ],
       };

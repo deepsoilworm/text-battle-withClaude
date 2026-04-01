@@ -5,8 +5,6 @@ Claude Code MCP 서버로 동작하는 텍스트 배틀 게임입니다.
 
 ## 설치
 
-### 1. MCP 서버 등록
-
 Claude Code 설정 파일에 추가:
 
 ```json
@@ -16,16 +14,20 @@ Claude Code 설정 파일에 추가:
       "command": "npx",
       "args": ["text-battle"],
       "env": {
-        "TEXT_BATTLE_SUPABASE_URL": "your-supabase-url",
-        "TEXT_BATTLE_SUPABASE_KEY": "your-supabase-anon-key",
-        "TEXT_BATTLE_OWNER": "your-username"
+        "TEXT_BATTLE_OWNER": "your-username",
+        "TEXT_BATTLE_SECRET": "your-password"
       }
     }
   }
 }
 ```
 
-### 2. 배틀 연출 설치 (선택)
+- `TEXT_BATTLE_OWNER`: 플레이어 이름 (유니크)
+- `TEXT_BATTLE_SECRET`: 비밀번호 (캐릭터 보호용)
+
+이것만 설정하면 끝! DB는 공용 서버를 사용합니다.
+
+### 배틀 연출 설치 (선택)
 
 ```bash
 npx text-battle-setup
@@ -52,6 +54,12 @@ Claude Code에서:
 - 물>불, 속도>힘 등 자연스러운 상성 반영
 - 강한 캐릭터도 ~30% 확률로 질 수 있음
 
+## 보안
+
+- 비밀번호는 SHA-256 해시로 저장되어 원문이 노출되지 않습니다
+- 캐릭터 생성/삭제 시 비밀번호를 검증합니다
+- 다른 사람의 캐릭터를 삭제할 수 없습니다
+
 ## MCP 도구
 
 | 도구 | 설명 |
@@ -63,14 +71,6 @@ Claude Code에서:
 | `save_battle` | 배틀 결과 저장 |
 | `get_leaderboard` | 랭킹 조회 |
 | `delete_character` | 캐릭터 삭제 |
-
-## 환경변수
-
-| 변수 | 설명 |
-|------|------|
-| `TEXT_BATTLE_SUPABASE_URL` | Supabase 프로젝트 URL |
-| `TEXT_BATTLE_SUPABASE_KEY` | Supabase anon key |
-| `TEXT_BATTLE_OWNER` | 플레이어 고유 ID (GitHub 유저네임 등) |
 
 ## 라이선스
 
