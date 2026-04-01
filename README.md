@@ -8,7 +8,7 @@ Claude Code MCP 서버로 동작하는 텍스트 배틀 게임입니다.
 권장 설치 방법:
 
 ```bash
-npx text-battle-setup
+npx --package text-battle text-battle-setup
 ```
 
 이 명령은 자동으로 다음을 처리합니다:
@@ -16,6 +16,8 @@ npx text-battle-setup
 - `~/.claude/settings.json`에 MCP 서버 등록
 - `~/.claude/CLAUDE.md`에 배틀 연출 설치
 - `TEXT_BATTLE_OWNER`와 `TEXT_BATTLE_SECRET` 설정
+
+`npx`는 로컬에 패키지가 없으면 npm 레지스트리에서 자동으로 내려받아 실행합니다.
 
 수동 설정이 필요한 경우:
 
