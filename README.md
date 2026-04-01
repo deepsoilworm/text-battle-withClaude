@@ -5,7 +5,22 @@ Claude Code MCP 서버로 동작하는 텍스트 배틀 게임입니다.
 
 ## 설치
 
-Claude Code 설정 파일에 추가:
+권장 설치 방법:
+
+```bash
+npx text-battle-setup
+```
+
+이 명령은 자동으로 다음을 처리합니다:
+
+- `~/.claude/settings.json`에 MCP 서버 등록
+- `~/.claude/CLAUDE.md`에 배틀 연출 설치
+- `TEXT_BATTLE_OWNER`와 `TEXT_BATTLE_SECRET` 설정
+
+수동 설정이 필요한 경우:
+
+- `~/.claude/settings.json`
+- 또는 Claude Code에서 `/settings` 명령을 열어 붙여넣기
 
 ```json
 {

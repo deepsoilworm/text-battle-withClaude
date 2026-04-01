@@ -3,66 +3,105 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { createInterface } from "readline";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLAUDE_MD_SOURCE = join(__dirname, "..", "CLAUDE.md");
 
-// 유저 홈 디렉토리의 .claude 경로
 const homeDir = process.env.HOME || process.env.USERPROFILE;
 const claudeDir = join(homeDir, ".claude");
-const targetPath = join(claudeDir, "CLAUDE.md");
+const claudeMdPath = join(claudeDir, "CLAUDE.md");
+const settingsPath = join(claudeDir, "settings.json");
 
-function setup() {
+function ask(rl, question) {
+  return new Promise((resolve) => rl.question(question, resolve));
+}
+
+async function setup() {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+
   console.log("");
   console.log("⚔️  텍스트 배틀 게임 — Setup");
   console.log("─".repeat(40));
   console.log("");
 
-  // CLAUDE.md 소스 확인
-  if (!existsSync(CLAUDE_MD_SOURCE)) {
-    console.error("❌ CLAUDE.md 파일을 찾을 수 없습니다.");
+  // 1. 이름/비밀번호 입력
+  const owner = await ask(rl, "🎮 플레이어 이름: ");
+  const secret = await ask(rl, "🔒 비밀번호: ");
+
+  if (!owner.trim() || !secret.trim()) {
+    console.error("❌ 이름과 비밀번호를 모두 입력해주세요.");
+    rl.close();
     process.exit(1);
   }
 
-  // .claude 디렉토리 생성
+  console.log("");
+
+  // 2. .claude 디렉토리 생성
   if (!existsSync(claudeDir)) {
     mkdirSync(claudeDir, { recursive: true });
-    console.log(`📁 ${claudeDir} 디렉토리 생성`);
   }
 
-  // 기존 CLAUDE.md 확인
-  if (existsSync(targetPath)) {
-    const existing = readFileSync(targetPath, "utf-8");
-    if (existing.includes("텍스트 배틀 게임")) {
-      console.log("✅ 이미 설치되어 있습니다. 업데이트합니다.");
-      // 기존 텍스트 배틀 섹션 제거 후 새로 추가
-      const cleaned = existing.replace(
-        /# 텍스트 배틀 게임[\s\S]*?(?=\n# [^텍]|\Z)/,
-        ""
-      ).trim();
-      const battleMd = readFileSync(CLAUDE_MD_SOURCE, "utf-8");
-      const merged = cleaned ? `${cleaned}\n\n${battleMd}` : battleMd;
-      writeFileSync(targetPath, merged, "utf-8");
-    } else {
-      // 기존 내용에 추가
-      const battleMd = readFileSync(CLAUDE_MD_SOURCE, "utf-8");
-      const merged = `${existing.trim()}\n\n${battleMd}`;
-      writeFileSync(targetPath, merged, "utf-8");
-      console.log("✅ 기존 CLAUDE.md에 배틀 설정 추가 완료");
+  // 3. settings.json에 MCP 서버 등록
+  let settings = {};
+  if (existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    } catch {
+      settings = {};
     }
-  } else {
-    // 새로 복사
-    const battleMd = readFileSync(CLAUDE_MD_SOURCE, "utf-8");
-    writeFileSync(targetPath, battleMd, "utf-8");
-    console.log("✅ CLAUDE.md 설치 완료");
   }
 
-  console.log(`   → ${targetPath}`);
+  if (!settings.mcpServers) {
+    settings.mcpServers = {};
+  }
+
+  settings.mcpServers["text-battle"] = {
+    command: "npx",
+    args: ["text-battle"],
+    env: {
+      TEXT_BATTLE_OWNER: owner.trim(),
+      TEXT_BATTLE_SECRET: secret.trim(),
+    },
+  };
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+  console.log("✅ MCP 서버 등록 완료");
+  console.log(`   → ${settingsPath}`);
+
+  // 4. CLAUDE.md 배틀 연출 설치
+  if (existsSync(CLAUDE_MD_SOURCE)) {
+    const battleMd = readFileSync(CLAUDE_MD_SOURCE, "utf-8");
+
+    if (existsSync(claudeMdPath)) {
+      const existing = readFileSync(claudeMdPath, "utf-8");
+      if (existing.includes("텍스트 배틀 게임")) {
+        const cleaned = existing
+          .replace(/# 텍스트 배틀 게임[\s\S]*?(?=\n# [^텍]|$)/, "")
+          .trim();
+        const merged = cleaned ? `${cleaned}\n\n${battleMd}` : battleMd;
+        writeFileSync(claudeMdPath, merged, "utf-8");
+      } else {
+        writeFileSync(claudeMdPath, `${existing.trim()}\n\n${battleMd}`, "utf-8");
+      }
+    } else {
+      writeFileSync(claudeMdPath, battleMd, "utf-8");
+    }
+    console.log("✅ 배틀 연출 설치 완료");
+    console.log(`   → ${claudeMdPath}`);
+  }
+
   console.log("");
   console.log("─".repeat(40));
-  console.log("🎮 사용법:");
-  console.log('   Claude Code에서 "배틀 시작" 이라고 말하세요!');
+  console.log("🎉 설치 완료!");
   console.log("");
+  console.log("Claude Code를 열고 이렇게 말하세요:");
+  console.log('   "배틀 시작!"');
+  console.log('   "캐릭터 만들어줘"');
+  console.log('   "랭킹 보여줘"');
+  console.log("");
+
+  rl.close();
 }
 
 setup();
