@@ -1,9 +1,11 @@
 # ⚔️ Text Battle
 
-Claude Code MCP 서버로 동작하는 텍스트 배틀 게임입니다.
-300자 이내로 캐릭터를 설계하고, 다른 플레이어의 캐릭터와 Elo 기반 매칭으로 배틀합니다.
+텍스트 배틀 게임 — 300자 이내로 캐릭터를 설계하고, 다른 플레이어와 Elo 기반 매칭으로 배틀합니다.
+**Claude Code**와 **OpenAI Codex** 모두 지원합니다.
 
 ## 설치
+
+### Claude Code (MCP)
 
 권장 설치 방법:
 
@@ -46,7 +48,18 @@ npx --package text-battle text-battle-setup
 
 이것만 설정하면 끝! DB는 공용 서버를 사용합니다.
 
-### 배틀 연출 설치 (선택)
+### Codex / 기타 AI (CLI)
+
+```bash
+npx --package text-battle text-battle-codex-setup
+```
+
+이 명령은 자동으로 다음을 처리합니다:
+
+- `AGENTS.md`에 CLI 사용법 설치 (Codex가 자동으로 읽음)
+- `~/.text-battle.json`에 인증 정보 저장
+
+### 배틀 연출 설치 (선택, Claude Code 전용)
 
 ```bash
 npx text-battle-setup
@@ -56,12 +69,27 @@ npx text-battle-setup
 
 ## 사용법
 
-Claude Code에서:
+### Claude Code에서
 
 ```
 캐릭터 만들어줘 - 이름: 화염술사, 설명: 근거리에서 폭발적인 화력을 가진 마법사...
 배틀 시작!
 랭킹 보여줘
+```
+
+### Codex에서
+
+세팅 후 똑같이 자연어로 말하면 됩니다. Codex가 AGENTS.md를 읽고 CLI를 자동 실행합니다.
+
+### CLI 직접 사용
+
+```bash
+npx --package text-battle text-battle-cli list                    # 캐릭터 목록
+npx --package text-battle text-battle-cli get "이름"               # 캐릭터 상세
+npx --package text-battle text-battle-cli create "이름" "설명"      # 캐릭터 생성
+npx --package text-battle text-battle-cli delete "이름"             # 캐릭터 삭제
+npx --package text-battle text-battle-cli match "내캐릭터"          # Elo 매칭
+npx --package text-battle text-battle-cli leaderboard              # 랭킹
 ```
 
 ## 게임 규칙
@@ -79,7 +107,9 @@ Claude Code에서:
 - 캐릭터 생성/삭제 시 비밀번호를 검증합니다
 - 다른 사람의 캐릭터를 삭제할 수 없습니다
 
-## MCP 도구
+## 도구
+
+### MCP (Claude Code)
 
 | 도구 | 설명 |
 |------|------|
@@ -90,6 +120,18 @@ Claude Code에서:
 | `save_battle` | 배틀 결과 저장 |
 | `get_leaderboard` | 랭킹 조회 |
 | `delete_character` | 캐릭터 삭제 |
+
+### CLI (Codex / 기타)
+
+| 명령어 | 설명 |
+|--------|------|
+| `text-battle-cli list` | 캐릭터 목록 |
+| `text-battle-cli get <name>` | 캐릭터 상세 |
+| `text-battle-cli create <name> <desc>` | 캐릭터 생성 |
+| `text-battle-cli delete <name>` | 캐릭터 삭제 |
+| `text-battle-cli match <name>` | Elo 매칭 |
+| `text-battle-cli save <A> <B> <winner> <sA> <sB> <summary>` | 결과 저장 |
+| `text-battle-cli leaderboard` | 랭킹 |
 
 ## 라이선스
 
