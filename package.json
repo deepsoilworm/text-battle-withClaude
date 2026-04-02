@@ -1,15 +1,19 @@
 {
   "name": "text-battle",
-  "version": "1.1.0",
-  "description": "텍스트 배틀 게임 - MCP 서버",
+  "version": "1.3.0",
+  "description": "텍스트 배틀 게임 - MCP 서버 + CLI",
   "type": "module",
   "bin": {
     "text-battle": "src/mcp-server.js",
-    "text-battle-setup": "src/setup.js"
+    "text-battle-setup": "src/setup.js",
+    "text-battle-cli": "src/cli.js",
+    "text-battle-codex-setup": "src/codex-setup.js"
   },
   "scripts": {
     "start": "node src/mcp-server.js",
-    "setup": "node src/setup.js"
+    "setup": "node src/setup.js",
+    "cli": "node src/cli.js",
+    "codex-setup": "node src/codex-setup.js"
   },
   "files": [
     "src/",
