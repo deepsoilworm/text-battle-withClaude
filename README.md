@@ -19,6 +19,8 @@ npx --package text-battle text-battle-setup
 
 `npx`는 로컬에 패키지가 없으면 npm 레지스트리에서 자동으로 내려받아 실행합니다.
 
+설치 후 Claude Code를 재시작하면 MCP 서버 설정이 제대로 반영됩니다.
+
 수동 설정이 필요한 경우:
 
 - `~/.claude/settings.json`

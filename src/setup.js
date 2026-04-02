@@ -58,7 +58,7 @@ async function setup() {
 
   settings.mcpServers["text-battle"] = {
     command: "npx",
-    args: ["text-battle"],
+    args: ["--package", "text-battle", "text-battle"],
     env: {
       TEXT_BATTLE_OWNER: owner.trim(),
       TEXT_BATTLE_SECRET: secret.trim(),
